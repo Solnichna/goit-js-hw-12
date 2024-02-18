@@ -4,13 +4,11 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import axios from "axios"; 
 
-
 const form = document.querySelector(".form");
 const gallery = document.querySelector(".gallery");
 const container = document.querySelector("div");
 const inputDate = document.querySelector("input");
 const loadMoreBtn = document.querySelector(".load-more");
-
 
 let searchTerm = '';
 let page = 1;
@@ -36,12 +34,11 @@ const hideLoadMoreBtn = () => {
   loadMoreBtn.style.display = "none";
 };
 
-
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   showLoader();
   gallery.innerHTML = "";
-  const searchTerm = inputDate.value;
+  searchTerm = inputDate.value;
   page = 1;
   try {
     await searchImages();
@@ -65,10 +62,9 @@ loadMoreBtn.addEventListener("click", async () => {
   }
 });
 
-
 async function searchImages() {
   const apiKey = '42288638-d7f8a30b0a31b090439479823';
-  const perPage = 15; 
+  const perPage = 15;
   const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchTerm}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`;
   try {
     const response = await axios.get(url);
@@ -79,10 +75,10 @@ async function searchImages() {
         transitionIn: "fadeInLeft",
       });
     } else {
-      const totalHits = response.data.totalHits; 
-      const currentHits = page * perPage; 
+      const totalHits = response.data.totalHits;
+      const currentHits = page * perPage;
       if (currentHits >= totalHits) {
-        hideLoadMoreBtn(); 
+        hideLoadMoreBtn();
         iziToast.info({
           message: "We're sorry, but you've reached the end of search results.",
           position: 'center',
@@ -90,7 +86,7 @@ async function searchImages() {
         });
       }
 
-      const galleryItemHeight = gallery.querySelector('.gallery-item').getBoundingClientRect().height; // Height of one gallery item
+      const galleryItemHeight = gallery.querySelector('.gallery-item').getBoundingClientRect().height;
       const markup = response.data.hits.map(data => {
         return `
           <li class="gallery-item">
@@ -115,9 +111,8 @@ async function searchImages() {
       });
       lightbox.on('show.simplelightbox').refresh();
 
-      
       window.scrollBy({
-        top: galleryItemHeight * 2, 
+        top: galleryItemHeight * 2,
         behavior: 'smooth'
       });
     }
