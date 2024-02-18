@@ -2,14 +2,18 @@ import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import axios from "axios"; 
 
 
 const form = document.querySelector(".form");
 const gallery = document.querySelector(".gallery");
 const container = document.querySelector("div");
 const inputDate = document.querySelector("input");
+const loadMoreBtn = document.querySelector(".load-more");
 
 
+let searchTerm = '';
+let page = 1;
 
 const showLoader = () => {
   const loader = document.createElement('span');
@@ -24,63 +28,99 @@ const hideLoader = () => {
   }
 };
 
-form.addEventListener("submit", (event) => {
+const showLoadMoreBtn = () => {
+  loadMoreBtn.computedStyleMap.display = "block";
+};
+
+const hideLoadMoreBtn = () => {
+  loadMoreBtn.computedStyleMap.display = "none";
+};
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
   showLoader();
-   gallery.innerHTML = "";
-   event.preventDefault();
-   const searchTerm = inputDate.value;
-   searchImages(searchTerm);
-    
+  gallery.innerHTML = "";
+  const searchTerm = inputDate.value;
+  page = 1;
+  try {
+    await searchImages();
+    showLoadMoreBtn();
+  } catch (error) {
+    console.log(error);
+  } finally {
+    hideLoader();
+  }
 });
 
-function searchImages(searchTerm) {
+loadMoreBtn.addEventListener("click", async () => {
+  showLoader();
+  try {
+    page++;
+    await searchImages();
+  } catch (error) {
+    console.log(error);
+  } finally {
+    hideLoader();
+  }
+});
+
+
+async function searchImages() {
   const apiKey = '42288638-d7f8a30b0a31b090439479823';
-  const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchTerm}&image_type=photo&orientation=horizontal&safesearch=true`;
-  fetch(url)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(response.status);
-      } else {
-        return response.json();
-      }
-    })
-    .then(data => {
-      if (data.hits.length === 0) {
-        iziToast.error({
-          message: 'Sorry, there are no images matching <br>your search query. Please try again!</br>',
+  const perPage = 15; 
+  const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchTerm}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`;
+  try {
+    const response = await axios.get(url);
+    if (response.data.hits.length === 0) {
+      iziToast.error({
+        message: 'Sorry, there are no images matching <br>your search query. Please try again!</br>',
+        position: 'center',
+        transitionIn: "fadeInLeft",
+      });
+    } else {
+      const totalHits = response.data.totalHits; 
+      const currentHits = page * perPage; 
+      if (currentHits >= totalHits) {
+        hideLoadMoreBtn(); 
+        iziToast.info({
+          message: "We're sorry, but you've reached the end of search results.",
           position: 'center',
           transitionIn: "fadeInLeft",
         });
-        hideLoader()
-      } else {
-        
-        const markup = data.hits
-          .map(data => {
-            return `
-            <li class="gallery-item"><a href="${data.largeImageURL}">
-          <img class="gallery-image" src="${data.webformatURL}" alt="${data.tags}"></a>
-          <p><b>Likes: </b>${data.likes}</p>
-          <p><b>Views: </b>${data.views}</p>
-          <p><b>Comments: </b>${data.comments}</p>
-          <p><b>Downloads: </b>${data.downloads}</p>
-          </li>`;
-          }).join('');
-        
-        gallery.insertAdjacentHTML("beforeend", markup);
-        const lightbox = new SimpleLightbox('.gallery a', {
-          captions: true,
-          captionType: 'attr',
-          captionsData: 'alt',
-          captionPosition: 'bottom',
-          fadeSpeed: 150,
-          captionSelector: "img",
-          captionDelay: 250,
-        });
-
-        lightbox.on('show.simplelightbox').refresh();
-        hideLoader();
       }
-    })
-    .catch((error) => console.log(error));
-   
-};
+
+      const galleryItemHeight = gallery.querySelector('.gallery-item').getBoundingClientRect().height; // Height of one gallery item
+      const markup = response.data.hits.map(data => {
+        return `
+          <li class="gallery-item">
+            <a href="${data.largeImageURL}">
+              <img class="gallery-image" src="${data.webformatURL}" alt="${data.tags}">
+            </a>
+            <p><b>Likes: </b>${data.likes}</p>
+            <p><b>Views: </b>${data.views}</p>
+            <p><b>Comments: </b>${data.comments}</p>
+            <p><b>Downloads: </b>${data.downloads}</p>
+          </li>`;
+      }).join('');
+      gallery.insertAdjacentHTML("beforeend", markup);
+      const lightbox = new SimpleLightbox('.gallery a', {
+        captions: true,
+        captionType: 'attr',
+        captionsData: 'alt',
+        captionPosition: 'bottom',
+        fadeSpeed: 150,
+        captionSelector: "img",
+        captionDelay: 250,
+      });
+      lightbox.on('show.simplelightbox').refresh();
+
+      
+      window.scrollBy({
+        top: galleryItemHeight * 2, 
+        behavior: 'smooth'
+      });
+    }
+  } catch (error) {
+    throw new Error(error.response.status);
+  }
+}
