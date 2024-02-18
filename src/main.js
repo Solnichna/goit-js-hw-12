@@ -29,12 +29,13 @@ const hideLoader = () => {
 };
 
 const showLoadMoreBtn = () => {
-  loadMoreBtn.computedStyleMap.display = "block";
+  loadMoreBtn.style.display = "block";
 };
 
 const hideLoadMoreBtn = () => {
-  loadMoreBtn.computedStyleMap.display = "none";
+  loadMoreBtn.style.display = "none";
 };
+
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
