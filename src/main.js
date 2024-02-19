@@ -68,6 +68,7 @@ async function searchImages() {
   const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchTerm}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`;
   try {
     const response = await axios.get(url);
+    
     if (response.data.hits.length === 0) {
       iziToast.error({
         message: 'Sorry, there are no images matching <br>your search query. Please try again!</br>',
