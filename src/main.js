@@ -9,7 +9,6 @@ const gallery = document.querySelector(".gallery");
 const container = document.querySelector("div");
 const inputDate = document.querySelector("input");
 const loadMoreBtn = document.createElement('button');
-
 loadMoreBtn.textContent = 'Load more';
 loadMoreBtn.classList.add('load-more-btn');
 container.append(loadMoreBtn);
@@ -17,7 +16,8 @@ container.append(loadMoreBtn);
 let currentPage = 1;
 let searchTerm = '';
 let totalHits = 0;
-let cardHeight = 0; 
+let cardHeight = 0;
+let lightbox = null; 
 
 const showLoader = () => {
   const loader = document.createElement('span');
@@ -102,18 +102,22 @@ async function searchImages() {
           </li>`;
         }).join('');
       gallery.insertAdjacentHTML("beforeend", markup);
-      const lightbox = new SimpleLightbox('.gallery a', {
-        captions: true,
-        captionType: 'attr',
-        captionsData: 'alt',
-        captionPosition: 'bottom',
-        fadeSpeed: 150,
-        captionSelector: "img",
-        captionDelay: 250,
-      });
-      lightbox.on('show.simplelightbox').refresh();
+      if (lightbox === null) {
+        
+        lightbox = new SimpleLightbox('.gallery a', {
+          captions: true,
+          captionType: 'attr',
+          captionsData: 'alt',
+          captionPosition: 'bottom',
+          fadeSpeed: 150,
+          captionSelector: "img",
+          captionDelay: 250,
+        });
+      } else {
+        
+        lightbox.refresh();
+      }
       showLoadMoreButton();
-      
       if (gallery.querySelectorAll('.gallery-item').length >= totalHits) {
         hideLoadMoreButton();
         iziToast.info({
@@ -122,15 +126,13 @@ async function searchImages() {
           transitionIn: "fadeInLeft",
         });
       }
-      
       if (cardHeight === 0) {
         const card = gallery.querySelector('.gallery-item');
         cardHeight = card.getBoundingClientRect().height;
       }
-      
       window.scrollBy({
-        top: cardHeight * 2, 
-        behavior: 'smooth' 
+        top: cardHeight * 2,
+        behavior: 'smooth'
       });
     }
   } catch (error) {
